@@ -13,7 +13,7 @@ p = np.zeros(len(tspan))
 p[0] = .9
 for k in range(len(tspan)-1):
     p[k+1] = p[k] + dt*P(p[k])
-A1 = p[-1]
+A1 = p
 
 ## Part b - Solve using backward Euler
 
@@ -22,7 +22,7 @@ p[0] = .9
 for k in range(len(tspan)-1):
     g = lambda z: z - p[k] - dt*P(z)
     p[k+1] = scipy.optimize.fsolve(g, p[k])
-A2 = p[-1]
+A2 = p
 
 ## Part c - Solve using the midpoint method
 
@@ -31,7 +31,7 @@ p[0] = .9
 for k in range(len(tspan)-1):
     k1 = p[k] + .5*dt*P(p[k])
     p[k+1] = p[k] + dt*P(k1)
-A3 = p[-1]
+A3 = p
 
 ## Part d - Solve with RK4
 
@@ -39,12 +39,12 @@ A3 = p[-1]
 p = np.zeros(len(tspan))
 p[0] = .9
 for k in range(len(tspan)-1):
-    k1 = p[k] + .5*dt*P(p[k])
-    k2 = p[k] + .5*dt*P(k1)
-    k3 = p[k] + .5*dt*P(k2)
-    k4 = p[k] + .5*dt*P(k3)
-    p[k+1] = p[k] + dt*P(k4)
-A4 = p[-1]
+    k1 = P(p[k])
+    k2 = P(p[k] + .5*dt*k1)
+    k3 = P(p[k] + .5*dt*k2)
+    k4 = P(p[k] + dt*k3)
+    p[k+1] = p[k] + dt*(k1 + 2*k2 + 2*k3 + k4)/6
+A4 = p
 
 ######################### Coding problem 2 ###################
 ## Part (a)
@@ -53,59 +53,46 @@ A4 = p[-1]
 # an adapter function. 
 a = 1/2
 Rprime = lambda R, J: a*R + J
-Rprime = lambda R, J: -R - a*J
+Jprime = lambda R, J: -R - a*J
 
-# odefun = .... # You define the ode function!
+odefun = lambda t, v: np.array([Rprime(v[0], v[1]), Jprime(v[0], v[1])])
 
 # Initial Condition
 x0 = np.array([2, 1])
 
-# Then we solve with
-# sol = scipy.integrate.solve_ivp(.... ) # You can fill this in
 
-# Then to get the t values we have
-# t = sol.t # uncomment
-# How about the R and J values? You do that part!
+sol = scipy.integrate.solve_ivp(odefun, [0, 20], x0)
 
 
+t = sol.t
+R = sol.y[0]
+J = sol.y[1]
+
+A5 = R
+A6 = J
 ## (b) 
-# Once you have the solution, you just need to index the right way to get the
-# solutions at the endpoints!
+A7 = np.array([R[-1], J[-1]])
 
 ## (c) 
-# This gets a little bit trickier. 
-# Let's first start by defining our trange:
 dt = 0.1
 trange = np.arange(0, 20+dt, dt)
 
-# Then, either set it up so that you have 
-x = np.zeros([len(trange), 2])
-# or do them separately:
 R = np.zeros(len(trange))
 J = np.zeros(len(trange))
-
-# With either choice you make, you need to then define the initial condition,
-# either with 
-x[0, :] = x0
-# or
 R[0] = 2
 J[0] = 1
 
-# Then you will need a for loop to do the rest.
 for k in range(len(trange)-1):
-    # x[k+1] = ....
-    # or use
-    # R[k+1] = ...
-    # and
-    # J[k+1] = ...
-    break # Remove this when you write your code!
+    R[k+1] = R[k] + dt * Rprime(R[k], J[k])
+    J[k+1] = J[k] + dt * Jprime(R[k], J[k])
+A8 = R
+A9 = J
 
 ## (d) 
-# This is just indexing again, you got it!
+A10 = np.array([R[-1], J[-1]])
 
 ## (e) 
-# Remember how we use norm: np.linalg.norm
-
+A11 = np.linalg.norm(A10-A7)
 
 ##################### Coding Problem 3 ##########################
 # Define the parameters we are going to use:
@@ -116,11 +103,18 @@ sigma = 0.12
 ## Part a
 # We now have two ODEs. Define them below as anonymous functions!
 
-# And initial conditions. This is just like Problem 2 above.
+thetaPrime = lambda v: v
+vPrime = lambda theta, v: -g/L * np.sin(theta)  -  sigma * v
+
+theta0 = -1 * np.pi / 8
+v0 = -0.1
 
 ## Part b
-# Test your anonymous function.
+odefun = lambda t, p: np.array([thetaPrime(p[1]), vPrime(p[0], p[1])])
 
+A12 = odefun(1, [2,3])
 
 ## Part c
-# Solve!
+sol = scipy.integrate.solve_ivp(odefun, [0, 50], [theta0, v0])
+A13 = sol.y
+
